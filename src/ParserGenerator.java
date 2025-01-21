@@ -26,7 +26,7 @@ public class ParserGenerator {
         var inpParser = new GrammarParser(
                 new CommonTokenStream(new GrammarLexer(CharStreams.fromPath(grammarPath)))
         );
-        var inpVisitor = new InputGrammarVisitor();
+        var inpVisitor = new GeneratorVisitor();
         inpVisitor.visit(inpParser.lang());
 
         var ll1m = checkLL1();

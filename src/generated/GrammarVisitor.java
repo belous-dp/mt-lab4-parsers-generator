@@ -17,15 +17,61 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitLang(GrammarParser.LangContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link GrammarParser#rule}.
+	 * Visit a parse tree produced by {@link GrammarParser#rule_}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitRule(GrammarParser.RuleContext ctx);
+	T visitRule_(GrammarParser.Rule_Context ctx);
+	/**
+	 * Visit a parse tree produced by {@link GrammarParser#inhAttrs}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInhAttrs(GrammarParser.InhAttrsContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GrammarParser#synthAttrs}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSynthAttrs(GrammarParser.SynthAttrsContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code epsBranch}
+	 * labeled alternative in {@link GrammarParser#branch}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitEpsBranch(GrammarParser.EpsBranchContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code nonEpsBranch}
+	 * labeled alternative in {@link GrammarParser#branch}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNonEpsBranch(GrammarParser.NonEpsBranchContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code symbr}
+	 * labeled alternative in {@link GrammarParser#symb}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSymbr(GrammarParser.SymbrContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code symbt}
+	 * labeled alternative in {@link GrammarParser#symb}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSymbt(GrammarParser.SymbtContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link GrammarParser#token}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitToken(GrammarParser.TokenContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GrammarParser#tokenValue}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTokenValue(GrammarParser.TokenValueContext ctx);
 }
