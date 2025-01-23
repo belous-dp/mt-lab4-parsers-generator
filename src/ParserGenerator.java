@@ -98,10 +98,12 @@ public class ParserGenerator {
             for (var nt : nonterminals) {
                 var A = nt.name;
                 for (var br : nt.branches) {
-                    for (int i = 0; i < br.size(); i++) {
-                        var B = br.get(i);
-                        if (!isTerminal(B)) {
-                            changed |= FOLLOW.get(B).addAll(first1(br.subList(i + 1, br.size()), A));
+                    if (br != null) {
+                        for (int i = 0; i < br.size(); i++) {
+                            var B = br.get(i);
+                            if (!isTerminal(B)) {
+                                changed |= FOLLOW.get(B).addAll(first1(br.subList(i + 1, br.size()), A));
+                            }
                         }
                     }
                 }
@@ -118,22 +120,20 @@ public class ParserGenerator {
         if (alpha == null || alpha.isEmpty()) {
             res.add(null);
         } else {
-            for (var e : alpha) {
-                if (isTerminal(e)) {
-                    res.add(e);
-                    break;
-                } else {
-                    var eps = false;
-                    for (var a : FIRST.get(e)) {
-                        if (a == null) {
-                            eps = true;
-                        } else {
-                            res.add(a);
-                        }
+            var e = alpha.getFirst();
+            if (isTerminal(e)) {
+                res.add(e);
+            } else {
+                var eps = false;
+                for (var a : FIRST.get(e)) {
+                    if (a == null) {
+                        eps = true;
+                    } else {
+                        res.add(a);
                     }
-                    if (!eps) {
-                        break;
-                    }
+                }
+                if (eps) {
+                    res.addAll(first(alpha.subList(1, alpha.size())));
                 }
             }
         }
