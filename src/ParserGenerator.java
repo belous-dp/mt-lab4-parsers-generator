@@ -3,11 +3,13 @@ import generated.GrammarParser;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
@@ -15,6 +17,7 @@ public class ParserGenerator {
     private final Path grammarPath, outDir;
     private final Map<String, Set<String>> FIRST = new HashMap<>();
     private final Map<String, Set<String>> FOLLOW = new HashMap<>();
+    private BufferedWriter out;
 
     ParserGenerator(String grammarPath, String outDir) throws FileNotFoundException {
         this.grammarPath = Path.of(grammarPath);
@@ -36,9 +39,14 @@ public class ParserGenerator {
         }
 
         initializeOutputStreams();
-        createTokensEnum();
-        createLexer();
-        createParser();
+        try {
+            includeHeaders();
+            createTokensEnum(initVisitor.getTerminals());
+            createLexer(initVisitor.getTerminals());
+            createParser();
+        } finally {
+            out.close();
+        }
     }
 
     private void initializeOutputStreams() throws IOException {
@@ -51,17 +59,134 @@ public class ParserGenerator {
             }
             Files.copy(src, outDir.resolve(fn), REPLACE_EXISTING);
         }
+        out = Files.newBufferedWriter(outDir.resolve("parser.hpp"));
     }
 
-    private void createTokensEnum() {
+    private void includeHeaders() throws IOException {
+        out.write(
+                """
+                #pragma once
+                #include <cassert>
+                #include <cctype>
+                #include <format>
+                #include <istream>
+                #include <stdexcept>
+                #include <string>
+                #include <regex>
+                #include <vector>
+                
+                using namespace std::string_literals;
+                
+                """);
+    }
 
+    private void createTokensEnum(List<CollectRulesVisitor.Terminal> terminals) throws IOException {
+        out.write("enum class token : { ");
+        out.write(terminals.stream().map(t -> t.name()).collect(Collectors.joining(", ")));
+        out.write(", _END };\n\n");
+    }
+
+    private void createLexer(List<CollectRulesVisitor.Terminal> terminals) throws IOException {
+        out.write("""
+                struct lexer_exception : std::runtime_error {
+                  using std::runtime_error::runtime_error;
+                };
+                
+                struct lexer {
+                  static constexpr size_t MAX_BUF_SIZE = 10000;
+                
+                  lexer(std::istream& is) : is(is) {
+                    if (!is) {
+                      throw lexer_exception{"stream is not opened"};
+                    }
+                    next_char();
+                    buf = ch;
+                  }
+                
+                  token cur_token() const noexcept {
+                    return t;
+                  }
+                
+                  std::string cur_token_val() const noexcept {
+                    return lexeme;
+                  }
+                
+                  std::string info() const noexcept {
+                    return "'" + buf + "' at pos " + std::to_string(pos - 1);
+                  }
+                
+                  token next_token() {
+                    while (is.good() && std::isspace(static_cast<unsigned char>(ch))) {
+                      next_char();
+                    }
+                    if (is.eof()) {
+                      t = token::END;
+                      return t;
+                    }
+                    if (!is) {
+                      throw lexer_exception{"the stream is corrupted or closed unexpectedly "
+                                            "(pos=" + std::to_string(pos) + ')'};
+                    }
+                """);
+        var hasRegexp = terminals.stream().anyMatch(CollectRulesVisitor.Terminal::isRegex);
+        if (hasRegexp) {
+            out.write("    auto match = std::smatch{};\n");
+        }
+        out.write("    do {\n      buf += ch;\n");
+        for (var tok : terminals) {
+            out.write("      if (");
+            if (tok.isRegex()) {
+                out.write("std::regex_match(buf, match, r" + tok.name() + ")");
+            } else {
+                out.write("buf == \"" + tok.value() + "\"");
+            }
+            out.write(") {\n        t = token::" + tok.name() + ";\n        break;\n      }\n");
+        }
+        out.write("""
+                      next_char();
+                      if (is.good() && std::isspace(static_cast<unsigned char>(ch))) {
+                        throw lexer_exception{"expected token, got space at pos " + std::to_string(pos)};
+                      }
+                      if (is.eof()) {
+                        throw lexer_exception{"unknown lexeme " + info()};
+                      }
+                    } while (buf.size() < MAX_BUF_SIZE);
+                    if (buf.size() >= MAX_BUF_SIZE) {
+                      throw lexer_exception{"unmatched lexeme size exceeded " + std::to_string(MAX_BUF_SIZE)};
+                    }
+                    lexeme = std::move(buf);
+                    buf = "";
+                    next_char();
+                    return t;
+                  }
+                
+                private:
+                  void next_char() {
+                    if (is.get(ch)) {
+                      pos++;
+                    }
+                  }
+                
+                """);
+        for (var tok : terminals) {
+            if (tok.isRegex()) {
+                out.write("  static const std::regex r" + tok.name() + "(\"" + tok.value() + "\");\n");
+            }
+        }
+        out.write("""
+                
+                  std::istream& is;
+                  std::string lexeme;
+                  std::string buf;
+                  size_t pos{0};
+                  token t;
+                  char ch;
+                };
+                
+                """);
     }
 
     private void createParser() {
-
-    }
-
-    private void createLexer() {
 
     }
 
