@@ -66,6 +66,9 @@ public class ParserGenerator {
         out.write(
                 """
                 #pragma once
+                
+                #include "tree.hpp"
+                
                 #include <cassert>
                 #include <cctype>
                 #include <format>
