@@ -9,6 +9,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
 public class ParserGenerator {
     private final Path grammarPath, outDir;
     private final Map<String, Set<String>> FIRST = new HashMap<>();
@@ -20,9 +22,6 @@ public class ParserGenerator {
             throw new FileNotFoundException("Grammar file not found: " + grammarPath);
         }
         this.outDir = Path.of(outDir);
-//        if (!Files.exists(this.outDir)) {
-//            throw new FileNotFoundException("Output directory not found: " + outDir);
-//        }
     }
 
     public void run() throws IOException {
@@ -36,9 +35,22 @@ public class ParserGenerator {
             throw new InvalidGrammarException("grammar is not an LL(1)");
         }
 
+        initializeOutputStreams();
         createTokensEnum();
         createLexer();
         createParser();
+    }
+
+    private void initializeOutputStreams() throws IOException {
+        Files.createDirectories(outDir);
+        var justCopy = List.of("CMakeLists.txt", "main.cpp", "tree.hpp");
+        for (var fn : justCopy) {
+            var src = getClass().getResourceAsStream(fn);
+            if (src == null) {
+                throw new FileNotFoundException("unable to find resource file " + fn);
+            }
+            Files.copy(src, outDir.resolve(fn), REPLACE_EXISTING);
+        }
     }
 
     private void createTokensEnum() {
