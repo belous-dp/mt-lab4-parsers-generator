@@ -33,9 +33,9 @@ public class RecursiveDescentGenerator {
         }
         out.write("\n      default:\n");
         out.write(String.format("        throw parser_exception{\"%s: unexpected token \" + lexer.info()};\n", rule.name));
-        out.write("      }\n");
+        out.write("      }\n    }\n");
         emplace_code(rule.synthAttrs, 3);
-        out.write("    }\n  };\n\n");
+        out.write("  };\n\n");
     }
 
     private void visitBranch(NonTerminal.Branch br, String ruleName) throws IOException {
@@ -55,7 +55,7 @@ public class RecursiveDescentGenerator {
             if (isTerminal(s)) {
                 out.write(String.format("        auto %s = lexer.cur_token_val();\n", cn));
             } else {
-                out.write(String.format("        auto %s = %s(%s);\n", cn, s.name, s.inhAttrsCall));
+                out.write(String.format("        auto %s = %s(%s);\n", cn, s.name, interpolate(s.inhAttrsCall)));
             }
             out.write(String.format("        children.emplace_back(%s);\n", cn));
         }
@@ -69,8 +69,12 @@ public class RecursiveDescentGenerator {
         }
         var lines = code.split("\\s*;\\s*");
         for (var l : lines) {
-            out.write("  ".repeat(tabs) + l + ";\n");
+            out.write("  ".repeat(tabs) + interpolate(l) + ";\n");
         }
+    }
+
+    private String interpolate(String code) {
+        return code.replace('$', '_'); // slightly incorrect ('\$' ignored)
     }
 
 
