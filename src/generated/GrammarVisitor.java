@@ -69,6 +69,12 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitToken(GrammarParser.TokenContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link GrammarParser#regex}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitRegex(GrammarParser.RegexContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link GrammarParser#tokenValue}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

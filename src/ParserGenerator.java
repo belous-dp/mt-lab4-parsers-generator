@@ -11,7 +11,6 @@ import java.util.*;
 
 public class ParserGenerator {
     private final Path grammarPath, outDir;
-    private final Map<String, String> terminals = new HashMap<>();
     private final Map<String, Set<String>> FIRST = new HashMap<>();
     private final Map<String, Set<String>> FOLLOW = new HashMap<>();
 
@@ -21,9 +20,9 @@ public class ParserGenerator {
             throw new FileNotFoundException("Grammar file not found: " + grammarPath);
         }
         this.outDir = Path.of(outDir);
-        if (!Files.exists(this.outDir)) {
-            throw new FileNotFoundException("Output directory not found: " + outDir);
-        }
+//        if (!Files.exists(this.outDir)) {
+//            throw new FileNotFoundException("Output directory not found: " + outDir);
+//        }
     }
 
     public void run() throws IOException {
@@ -33,7 +32,7 @@ public class ParserGenerator {
         var initVisitor = new CollectRulesVisitor();
         initVisitor.visit(inpParser.lang());
 
-        if (!checkLL1(initVisitor.getTerminals(), initVisitor.getNonterminals())) {
+        if (!checkLL1(initVisitor.getNonterminals())) {
             throw new InvalidGrammarException("grammar is not an LL(1)");
         }
 
@@ -54,9 +53,8 @@ public class ParserGenerator {
 
     }
 
-    private boolean checkLL1(List<CollectRulesVisitor.Terminal> terminalRules,
-                            List<CollectRulesVisitor.NonTerminal> nonterminalRules) {
-        buildFirstFollow(terminalRules, nonterminalRules);
+    private boolean checkLL1(List<CollectRulesVisitor.NonTerminal> nonterminalRules) {
+        buildFirstFollow(nonterminalRules);
         for (var nt : nonterminalRules) {
             var A = nt.name;
             for (int i = 0; i < nt.branches.size(); i++) {
@@ -78,9 +76,7 @@ public class ParserGenerator {
     }
 
 
-    private void buildFirstFollow(List<CollectRulesVisitor.Terminal> terminals,
-                                  List<CollectRulesVisitor.NonTerminal> nonterminals) {
-        terminals.forEach(t -> this.terminals.put(t.name(), t.value()));
+    private void buildFirstFollow(List<CollectRulesVisitor.NonTerminal> nonterminals) {
         nonterminals.forEach(nt -> FIRST.put(nt.name, new HashSet<>()));
 
         var changed = true;
@@ -124,7 +120,7 @@ public class ParserGenerator {
         } else {
             for (var e : alpha) {
                 if (isTerminal(e)) {
-                    res.add(terminals.get(e));
+                    res.add(e);
                     break;
                 } else {
                     var eps = false;

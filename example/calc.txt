@@ -2,8 +2,9 @@ e: t ep
 ep: PLUS t ep | MINUS t ep | ε
 t: f tp
 tp: MUL f tp | DIV f tp | ε
-f: n | LP e RP
+f: NUM | LP e RP
 
+NUM: r"[0-9]+"
 PLUS: "+"
 MINUS: "-"
 MUL: "*"

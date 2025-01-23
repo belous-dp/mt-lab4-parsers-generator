@@ -11,7 +11,8 @@ public class CollectRulesVisitor extends GrammarBaseVisitor<Void> implements Gra
 
     public record Terminal(
         String name,
-        String value
+        String value,
+        boolean isRegex
     ) {}
     public static class NonTerminal {
         String name;
@@ -44,7 +45,7 @@ public class CollectRulesVisitor extends GrammarBaseVisitor<Void> implements Gra
     }
 
     @Override public Void visitToken(GrammarParser.TokenContext ctx) {
-        terminals.add(new Terminal(ctx.TOKEN_NAME().getText(), ctx.tokenValue().getText()));
+        terminals.add(new Terminal(ctx.TOKEN_NAME().getText(), ctx.tokenValue().getText(), ctx.regex() != null));
         return null;
     }
 
