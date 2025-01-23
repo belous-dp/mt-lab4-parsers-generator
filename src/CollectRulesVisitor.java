@@ -13,7 +13,7 @@ public class CollectRulesVisitor extends GrammarBaseVisitor<Void> implements Gra
         String name,
         String value
     ) {}
-    public class NonTerminal {
+    public static class NonTerminal {
         String name;
         List<ArrayList<String>> branches = new ArrayList<>();
 

@@ -1,0 +1,12 @@
+e: t ep
+ep: PLUS t ep | MINUS t ep | ε
+t: f tp
+tp: MUL f tp | DIV f tp | ε
+f: n | LP e RP
+
+PLUS: "+"
+MINUS: "-"
+MUL: "*"
+DIV: "/"
+LP: "("
+RP: ")"
