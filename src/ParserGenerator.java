@@ -43,7 +43,7 @@ public class ParserGenerator {
             includeHeaders();
             createTokensEnum(initVisitor.getTerminals());
             createLexer(initVisitor.getTerminals());
-            createParser();
+            createParser(initVisitor.getNonterminals());
         } finally {
             out.close();
         }
@@ -83,13 +83,13 @@ public class ParserGenerator {
                 """);
     }
 
-    private void createTokensEnum(List<CollectRulesVisitor.Terminal> terminals) throws IOException {
+    private void createTokensEnum(List<Terminal> terminals) throws IOException {
         out.write("enum class token : { ");
-        out.write(terminals.stream().map(t -> t.name()).collect(Collectors.joining(", ")));
+        out.write(terminals.stream().map(Terminal::name).collect(Collectors.joining(", ")));
         out.write(", _END };\n\n");
     }
 
-    private void createLexer(List<CollectRulesVisitor.Terminal> terminals) throws IOException {
+    private void createLexer(List<Terminal> terminals) throws IOException {
         out.write("""
                 struct lexer_exception : std::runtime_error {
                   using std::runtime_error::runtime_error;
@@ -131,7 +131,7 @@ public class ParserGenerator {
                                             "(pos=" + std::to_string(pos) + ')'};
                     }
                 """);
-        var hasRegexp = terminals.stream().anyMatch(CollectRulesVisitor.Terminal::isRegex);
+        var hasRegexp = terminals.stream().anyMatch(Terminal::isRegex);
         if (hasRegexp) {
             out.write("    auto match = std::smatch{};\n");
         }
@@ -189,11 +189,28 @@ public class ParserGenerator {
                 """);
     }
 
-    private void createParser() {
-
+    private void createParser(List<NonTerminal> nonterminals) throws IOException {
+        out.write("""
+                struct parser_exception : std::runtime_error {
+                  using std::runtime_error::runtime_error;
+                };
+                
+                class parser {
+                  lexer lexer;
+                
+                """);
+        new RecursiveDescentGenerator(nonterminals, out, this::first1).generate();
+        out.write("""
+                public:
+                  parser(std::istream& is) : lexer(is) {}
+                
+                  node parse() {
+                    lexer.next_token();
+                """);
+        out.write("    return " + nonterminals.getFirst().name + "();\n  }\n};\n");
     }
 
-    private boolean checkLL1(List<CollectRulesVisitor.NonTerminal> nonterminalRules) {
+    private boolean checkLL1(List<NonTerminal> nonterminalRules) {
         buildFirstFollow(nonterminalRules);
         for (var nt : nonterminalRules) {
             var A = nt.name;
@@ -216,7 +233,7 @@ public class ParserGenerator {
     }
 
 
-    private void buildFirstFollow(List<CollectRulesVisitor.NonTerminal> nonterminals) {
+    private void buildFirstFollow(List<NonTerminal> nonterminals) {
         nonterminals.forEach(nt -> FIRST.put(nt.name, new HashSet<>()));
 
         var changed = true;
@@ -231,7 +248,7 @@ public class ParserGenerator {
         }
 
         nonterminals.forEach(nt -> FOLLOW.put(nt.name, new HashSet<>()));
-        FOLLOW.get(nonterminals.getFirst().name).add(null); // '$'/EOF
+        FOLLOW.get(nonterminals.getFirst().name).add("_END"); // '$'/EOF
         changed = true;
         while (changed) {
             changed = false;
@@ -239,10 +256,12 @@ public class ParserGenerator {
                 var A = nt.name;
                 for (var br : nt.branches) {
                     if (br != null) {
-                        for (int i = 0; i < br.size(); i++) {
-                            var B = br.get(i);
+                        var brs = br.symbs;
+                        assert(brs != null);
+                        for (int i = 0; i < brs.size(); i++) {
+                            var B = brs.get(i);
                             if (!isTerminal(B)) {
-                                changed |= FOLLOW.get(B).addAll(first1(br.subList(i + 1, br.size()), A));
+                                changed |= FOLLOW.get(B.name).addAll(first1(brs.subList(i + 1, brs.size()), A));
                             }
                         }
                     }
@@ -251,21 +270,25 @@ public class ParserGenerator {
         }
     }
 
-    private boolean isTerminal(String name) {
-        return 'A' <= name.charAt(0) && name.charAt(0) <= 'Z';
+    private boolean isTerminal(NonTerminal.Branch.Symb symb) {
+        return 'A' <= symb.name.charAt(0) && symb.name.charAt(0) <= 'Z';
     }
 
-    private Set<String> first(List<String> alpha) {
+    private Set<String> first(NonTerminal.Branch alpha) {
+        return alpha == null ? first((List<NonTerminal.Branch.Symb>) null) : first(alpha.symbs);
+    }
+
+    private Set<String> first(List<NonTerminal.Branch.Symb> alpha) {
         var res = new HashSet<String>();
         if (alpha == null || alpha.isEmpty()) {
             res.add(null);
         } else {
             var e = alpha.getFirst();
             if (isTerminal(e)) {
-                res.add(e);
+                res.add(e.name);
             } else {
                 var eps = false;
-                for (var a : FIRST.get(e)) {
+                for (var a : FIRST.get(e.name)) {
                     if (a == null) {
                         eps = true;
                     } else {
@@ -280,7 +303,11 @@ public class ParserGenerator {
         return res;
     }
 
-    private Set<String> first1(List<String> alpha, String A) {
+    private Set<String> first1(NonTerminal.Branch alpha, String A) {
+        return alpha == null ? first1((List<NonTerminal.Branch.Symb>) null, A) : first1(alpha.symbs, A);
+    }
+
+    private Set<String> first1(List<NonTerminal.Branch.Symb> alpha, String A) {
         var res = first(alpha);
         if (res.contains(null)) {
             res.remove(null);
