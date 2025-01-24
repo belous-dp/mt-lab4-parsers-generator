@@ -1,0 +1,20 @@
+e: o ep
+ep: OR o ep | ε
+o: x op
+op: XOR x op | ε
+x: a xp
+xp: AND a xp | ε
+a: s ap
+ap: SHL s ap | SHR s ap | ε
+s: NOT n | n
+n: LP e RP | VAR
+
+VAR: r"[a-zA-Z_][a-zA-Z_0-9]*";
+OR: "|"
+XOR: "^"
+AND: "&"
+SHL: "<<"
+SHR: ">>"
+NOT: "~"
+LP: "("
+RP: ")"
