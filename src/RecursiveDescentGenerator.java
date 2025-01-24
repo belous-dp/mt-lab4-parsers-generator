@@ -23,28 +23,32 @@ public class RecursiveDescentGenerator {
         }
     }
 
+    // NOTE: synthesizable attributes types must be default-constructible
+    // this can be avoided with additional complexity and restrictions on SYNTH_CODE
     public void visitRule(NonTerminal rule) throws IOException {
         out.write(String.format("  struct %s : node {\n", rule.name));
-        out.write(String.format("    %s(%s) : node(\"%s\") {\n", rule.name, rule.inhAttrs, rule.name));
-        out.write(             ("      switch (lexer.cur_token()) {"));
+        out.write(String.format("    %s() : node(\"%s\") {};\n", rule.name, rule.name));
+        emplace_code(rule.synthAttrs, 2);
+        out.write("  };\n");
+        out.write(String.format("  %s %s(%s) {\n", rule.name, rule.name, rule.inhAttrs));
+        out.write(String.format("    auto _res = (struct %s){};\n", rule.name));
+        out.write(             ("    switch (lexer.cur_token()) {"));
         assert(!rule.branches.isEmpty());
         for (var br : rule.branches) {
             visitBranch(br, rule.name);
         }
-        out.write("\n      default:\n");
-        out.write(String.format("        throw parser_exception{\"%s: unexpected token \" + lexer.info()};\n", rule.name));
-        out.write("      }\n    }\n");
-        emplace_code(rule.synthAttrs, 3);
-        out.write("  };\n\n");
+        out.write("\n    default:\n");
+        out.write(String.format("      throw parser_exception{\"%s: \" + (lexer.cur_token() == token::_END ? \"expected a token, but got EOF\" : (\"unexpected token \" + lexer.info()))};\n", rule.name));
+        out.write("    }\n    return _res;\n  }\n\n");
     }
 
     private void visitBranch(NonTerminal.Branch br, String ruleName) throws IOException {
         for (var cas : first1.apply(br, ruleName)) {
-            out.write(String.format("\n      case token::%s:", cas));
+            out.write(String.format("\n    case token::%s:", cas));
         }
         out.write(" {\n");
         if (br == null) { // eps
-            out.write("        empty = true;\n        break;\n      }");
+            out.write("      empty = true;\n      break;\n    }");
             return;
         }
         assert(br.symbs != null);
@@ -53,14 +57,14 @@ public class RecursiveDescentGenerator {
             var s = br.symbs.get(i);
             var cn = String.format("_%d", i + 1);
             if (isTerminal(s)) {
-                out.write(String.format("        auto %s = lexer.cur_token_val();\n", cn));
+                out.write(String.format("      auto %s = lexer.cur_token_val();\n", cn));
             } else {
-                out.write(String.format("        auto %s = %s(%s);\n", cn, s.name, interpolate(s.inhAttrsCall)));
+                out.write(String.format("      auto %s = %s(%s);\n", cn, s.name, interpolate(s.inhAttrsCall)));
             }
-            out.write(String.format("        children.emplace_back(%s);\n", cn));
+            out.write(String.format("      _res.children.emplace_back(%s);\n", cn));
         }
-        emplace_code(br.synthCode, 4);
-        out.write("        break;\n      }");
+        emplace_code(br.synthCode, 3);
+        out.write("      break;\n    }");
     }
 
     private void emplace_code(String code, int tabs) throws IOException {

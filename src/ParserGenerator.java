@@ -69,7 +69,6 @@ public class ParserGenerator {
                 
                 #include "tree.hpp"
                 
-                #include <cassert>
                 #include <cctype>
                 #include <format>
                 #include <istream>
@@ -84,7 +83,7 @@ public class ParserGenerator {
     }
 
     private void createTokensEnum(List<Terminal> terminals) throws IOException {
-        out.write("enum class token : { ");
+        out.write("enum class token { ");
         out.write(terminals.stream().map(Terminal::name).collect(Collectors.joining(", ")));
         out.write(", _END };\n\n");
     }
@@ -123,7 +122,7 @@ public class ParserGenerator {
                       next_char();
                     }
                     if (is.eof()) {
-                      t = token::END;
+                      t = token::_END;
                       return t;
                     }
                     if (!is) {
@@ -173,7 +172,8 @@ public class ParserGenerator {
                 """);
         for (var tok : terminals) {
             if (tok.isRegex()) {
-                out.write("  static const std::regex r" + tok.name() + "(\"" + tok.value() + "\");\n");
+                out.write("  const std::regex r" + tok.name() + "(\"" + tok.value() + "\");\n");
+                // NOTE: the field can be static, but that would require less elegant code
             }
         }
         out.write("""

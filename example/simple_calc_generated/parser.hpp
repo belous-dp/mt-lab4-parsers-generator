@@ -2,7 +2,6 @@
 
 #include "tree.hpp"
 
-#include <cassert>
 #include <cctype>
 #include <format>
 #include <istream>
@@ -13,7 +12,7 @@
 
 using namespace std::string_literals;
 
-enum class token : { NUM, PLUS, MINUS, MUL, DIV, LP, RP, _END };
+enum class token { NUM, PLUS, MINUS, MUL, DIV, LP, RP, _END };
 
 struct lexer_exception : std::runtime_error {
   using std::runtime_error::runtime_error;
@@ -47,7 +46,7 @@ struct lexer {
       next_char();
     }
     if (is.eof()) {
-      t = token::END;
+      t = token::_END;
       return t;
     }
     if (!is) {
@@ -109,7 +108,7 @@ private:
     }
   }
 
-  static const std::regex rNUM("[0-9]+");
+  const std::regex rNUM("[0-9]+");
 
   std::istream& is;
   std::string lexeme;
@@ -127,127 +126,142 @@ class parser {
   lexer lexer;
 
   struct e : node {
-    e() : node("e") {
-      switch (lexer.cur_token()) {
-      case token::LP:
-      case token::NUM: {
-        auto _1 = t();
-        children.emplace_back(_1);
-        auto _2 = ep();
-        children.emplace_back(_2);
-        break;
-      }
-      default:
-        throw parser_exception{"e: unexpected token " + lexer.info()};
-      }
-    }
+    e() : node("e") {};
   };
+  e e() {
+    auto _res = (struct e){};
+    switch (lexer.cur_token()) {
+    case token::LP:
+    case token::NUM: {
+      auto _1 = t();
+      _res.children.emplace_back(_1);
+      auto _2 = ep();
+      _res.children.emplace_back(_2);
+      break;
+    }
+    default:
+      throw parser_exception{"e: " + (lexer.cur_token() == token::_END ? "expected a token, but got EOF" : ("unexpected token " + lexer.info()))};
+    }
+    return _res;
+  }
 
   struct ep : node {
-    ep() : node("ep") {
-      switch (lexer.cur_token()) {
-      case token::PLUS: {
-        auto _1 = lexer.cur_token_val();
-        children.emplace_back(_1);
-        auto _2 = t();
-        children.emplace_back(_2);
-        auto _3 = ep();
-        children.emplace_back(_3);
-        break;
-      }
-      case token::MINUS: {
-        auto _1 = lexer.cur_token_val();
-        children.emplace_back(_1);
-        auto _2 = t();
-        children.emplace_back(_2);
-        auto _3 = ep();
-        children.emplace_back(_3);
-        break;
-      }
-      case token::_END:
-      case token::RP: {
-        empty = true;
-        break;
-      }
-      default:
-        throw parser_exception{"ep: unexpected token " + lexer.info()};
-      }
-    }
+    ep() : node("ep") {};
   };
+  ep ep() {
+    auto _res = (struct ep){};
+    switch (lexer.cur_token()) {
+    case token::PLUS: {
+      auto _1 = lexer.cur_token_val();
+      _res.children.emplace_back(_1);
+      auto _2 = t();
+      _res.children.emplace_back(_2);
+      auto _3 = ep();
+      _res.children.emplace_back(_3);
+      break;
+    }
+    case token::MINUS: {
+      auto _1 = lexer.cur_token_val();
+      _res.children.emplace_back(_1);
+      auto _2 = t();
+      _res.children.emplace_back(_2);
+      auto _3 = ep();
+      _res.children.emplace_back(_3);
+      break;
+    }
+    case token::_END:
+    case token::RP: {
+      empty = true;
+      break;
+    }
+    default:
+      throw parser_exception{"ep: " + (lexer.cur_token() == token::_END ? "expected a token, but got EOF" : ("unexpected token " + lexer.info()))};
+    }
+    return _res;
+  }
 
   struct t : node {
-    t() : node("t") {
-      switch (lexer.cur_token()) {
-      case token::LP:
-      case token::NUM: {
-        auto _1 = f();
-        children.emplace_back(_1);
-        auto _2 = tp();
-        children.emplace_back(_2);
-        break;
-      }
-      default:
-        throw parser_exception{"t: unexpected token " + lexer.info()};
-      }
-    }
+    t() : node("t") {};
   };
+  t t() {
+    auto _res = (struct t){};
+    switch (lexer.cur_token()) {
+    case token::LP:
+    case token::NUM: {
+      auto _1 = f();
+      _res.children.emplace_back(_1);
+      auto _2 = tp();
+      _res.children.emplace_back(_2);
+      break;
+    }
+    default:
+      throw parser_exception{"t: " + (lexer.cur_token() == token::_END ? "expected a token, but got EOF" : ("unexpected token " + lexer.info()))};
+    }
+    return _res;
+  }
 
   struct tp : node {
-    tp() : node("tp") {
-      switch (lexer.cur_token()) {
-      case token::MUL: {
-        auto _1 = lexer.cur_token_val();
-        children.emplace_back(_1);
-        auto _2 = f();
-        children.emplace_back(_2);
-        auto _3 = tp();
-        children.emplace_back(_3);
-        break;
-      }
-      case token::DIV: {
-        auto _1 = lexer.cur_token_val();
-        children.emplace_back(_1);
-        auto _2 = f();
-        children.emplace_back(_2);
-        auto _3 = tp();
-        children.emplace_back(_3);
-        break;
-      }
-      case token::_END:
-      case token::RP:
-      case token::PLUS:
-      case token::MINUS: {
-        empty = true;
-        break;
-      }
-      default:
-        throw parser_exception{"tp: unexpected token " + lexer.info()};
-      }
-    }
+    tp() : node("tp") {};
   };
+  tp tp() {
+    auto _res = (struct tp){};
+    switch (lexer.cur_token()) {
+    case token::MUL: {
+      auto _1 = lexer.cur_token_val();
+      _res.children.emplace_back(_1);
+      auto _2 = f();
+      _res.children.emplace_back(_2);
+      auto _3 = tp();
+      _res.children.emplace_back(_3);
+      break;
+    }
+    case token::DIV: {
+      auto _1 = lexer.cur_token_val();
+      _res.children.emplace_back(_1);
+      auto _2 = f();
+      _res.children.emplace_back(_2);
+      auto _3 = tp();
+      _res.children.emplace_back(_3);
+      break;
+    }
+    case token::_END:
+    case token::RP:
+    case token::PLUS:
+    case token::MINUS: {
+      empty = true;
+      break;
+    }
+    default:
+      throw parser_exception{"tp: " + (lexer.cur_token() == token::_END ? "expected a token, but got EOF" : ("unexpected token " + lexer.info()))};
+    }
+    return _res;
+  }
 
   struct f : node {
-    f() : node("f") {
-      switch (lexer.cur_token()) {
-      case token::NUM: {
-        auto _1 = lexer.cur_token_val();
-        children.emplace_back(_1);
-        break;
-      }
-      case token::LP: {
-        auto _1 = lexer.cur_token_val();
-        children.emplace_back(_1);
-        auto _2 = e();
-        children.emplace_back(_2);
-        auto _3 = lexer.cur_token_val();
-        children.emplace_back(_3);
-        break;
-      }
-      default:
-        throw parser_exception{"f: unexpected token " + lexer.info()};
-      }
-    }
+    f() : node("f") {};
   };
+  f f() {
+    auto _res = (struct f){};
+    switch (lexer.cur_token()) {
+    case token::NUM: {
+      auto _1 = lexer.cur_token_val();
+      _res.children.emplace_back(_1);
+      break;
+    }
+    case token::LP: {
+      auto _1 = lexer.cur_token_val();
+      _res.children.emplace_back(_1);
+      auto _2 = e();
+      _res.children.emplace_back(_2);
+      auto _3 = lexer.cur_token_val();
+      _res.children.emplace_back(_3);
+      break;
+    }
+    default:
+      throw parser_exception{"f: " + (lexer.cur_token() == token::_END ? "expected a token, but got EOF" : ("unexpected token " + lexer.info()))};
+    }
+    return _res;
+  }
 
 public:
   parser(std::istream& is) : lexer(is) {}

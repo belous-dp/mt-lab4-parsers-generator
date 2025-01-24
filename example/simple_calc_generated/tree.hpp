@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <format>
 #include <ostream>
 #include <string>
@@ -7,12 +8,11 @@
 
 using namespace std::string_literals;
 
-class node {
+struct node {
   std::string value;
   std::vector<node> children;
   bool empty;
 
-public:
   node(std::string const& value, bool empty = false) : value(value), empty(empty) {}
 
   template <typename... Children,
