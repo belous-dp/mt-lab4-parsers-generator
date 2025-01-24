@@ -70,7 +70,6 @@ public class ParserGenerator {
                 #include "tree.hpp"
                 
                 #include <cctype>
-                #include <format>
                 #include <istream>
                 #include <stdexcept>
                 #include <string>
