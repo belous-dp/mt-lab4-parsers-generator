@@ -3,7 +3,6 @@
 #include "tree.hpp"
 
 #include <cctype>
-#include <format>
 #include <istream>
 #include <stdexcept>
 #include <string>
@@ -26,7 +25,6 @@ struct lexer {
       throw lexer_exception{"stream is not opened"};
     }
     next_char();
-    buf = ch;
   }
 
   token cur_token() const noexcept {
@@ -42,7 +40,7 @@ struct lexer {
   }
 
   token next_token() {
-    while (is.good() && std::isspace(static_cast<unsigned char>(ch))) {
+    while (is.good() && isspace()) {
       next_char();
     }
     if (is.eof()) {
@@ -53,10 +51,9 @@ struct lexer {
       throw lexer_exception{"the stream is corrupted or closed unexpectedly "
                             "(pos=" + std::to_string(pos) + ')'};
     }
-    auto match = std::smatch{};
     do {
       buf += ch;
-      if (std::regex_match(buf, match, rNUM)) {
+      if (greedy_regex_match(rNUM)) {
         t = token::NUM;
         break;
       }
@@ -85,7 +82,7 @@ struct lexer {
         break;
       }
       next_char();
-      if (is.good() && std::isspace(static_cast<unsigned char>(ch))) {
+      if (is.good() && isspace()) {
         throw lexer_exception{"expected token, got space at pos " + std::to_string(pos)};
       }
       if (is.eof()) {
@@ -106,6 +103,24 @@ private:
     if (is.get(ch)) {
       pos++;
     }
+  }
+
+  void isspace() const noexcept {
+    return std::isspace(static_cast<unsigned char>(ch));
+  }
+
+  bool greedy_regex_match(const std::regex& r) {
+    if (!std::regex_match(buf, r)) {
+      return false;
+    }
+    do {
+      next_char();
+      buf += ch;
+    } while (is.good() && !isspace() && std::regex_match(buf, r));
+    buf.pop_back();
+    is.unget();
+    pos--;
+    return true;
   }
 
   const std::regex rNUM{"[0-9]+"};

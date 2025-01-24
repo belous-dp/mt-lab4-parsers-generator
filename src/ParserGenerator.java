@@ -101,7 +101,6 @@ public class ParserGenerator {
                       throw lexer_exception{"stream is not opened"};
                     }
                     next_char();
-                    buf = ch;
                   }
                 
                   token cur_token() const noexcept {
@@ -117,7 +116,7 @@ public class ParserGenerator {
                   }
                 
                   token next_token() {
-                    while (is.good() && std::isspace(static_cast<unsigned char>(ch))) {
+                    while (is.good() && isspace()) {
                       next_char();
                     }
                     if (is.eof()) {
@@ -129,15 +128,11 @@ public class ParserGenerator {
                                             "(pos=" + std::to_string(pos) + ')'};
                     }
                 """);
-        var hasRegexp = terminals.stream().anyMatch(Terminal::isRegex);
-        if (hasRegexp) {
-            out.write("    auto match = std::smatch{};\n");
-        }
         out.write("    do {\n      buf += ch;\n");
         for (var tok : terminals) {
             out.write("      if (");
             if (tok.isRegex()) {
-                out.write("std::regex_match(buf, match, r" + tok.name() + ")");
+                out.write("greedy_regex_match(r" + tok.name() + ")");
             } else {
                 out.write("buf == \"" + tok.value() + "\"");
             }
@@ -145,7 +140,7 @@ public class ParserGenerator {
         }
         out.write("""
                       next_char();
-                      if (is.good() && std::isspace(static_cast<unsigned char>(ch))) {
+                      if (is.good() && isspace()) {
                         throw lexer_exception{"expected token, got space at pos " + std::to_string(pos)};
                       }
                       if (is.eof()) {
@@ -166,6 +161,24 @@ public class ParserGenerator {
                     if (is.get(ch)) {
                       pos++;
                     }
+                  }
+                
+                  void isspace() const noexcept {
+                    return std::isspace(static_cast<unsigned char>(ch));
+                  }
+                
+                  bool greedy_regex_match(const std::regex& r) {
+                    if (!std::regex_match(buf, r)) {
+                      return false;
+                    }
+                    do {
+                      next_char();
+                      buf += ch;
+                    } while (is.good() && !isspace() && std::regex_match(buf, r));
+                    buf.pop_back();
+                    is.unget();
+                    pos--;
+                    return true;
                   }
                 
                 """);
