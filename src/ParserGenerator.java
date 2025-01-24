@@ -213,6 +213,13 @@ public class ParserGenerator {
                 """);
         new RecursiveDescentGenerator(nonterminals, out, this::first1).generate();
         out.write("""
+                  parser_exception invalid_token(std::string&& n) {
+                    auto reason = lexer.cur_token() == token::_END
+                                      ? "expected a token, but got EOF"
+                                      : ("unexpected token " + lexer.info());
+                    return parser_exception{n + reason};
+                  }
+                
                 public:
                   parser(std::istream& is) : lexer(is) {}
                 

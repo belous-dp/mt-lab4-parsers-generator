@@ -155,7 +155,7 @@ class parser {
       break;
     }
     default:
-      throw parser_exception{"e: " + (lexer.cur_token() == token::_END ? "expected a token, but got EOF" : ("unexpected token " + lexer.info()))};
+      throw invalid_token("e");
     }
     return _res;
   }
@@ -169,6 +169,7 @@ class parser {
     case token::PLUS: {
       auto _1 = lexer.cur_token_val();
       _res.children.emplace_back(_1);
+      lexer.next_token();
       auto _2 = t();
       _res.children.emplace_back(_2);
       auto _3 = ep();
@@ -178,6 +179,7 @@ class parser {
     case token::MINUS: {
       auto _1 = lexer.cur_token_val();
       _res.children.emplace_back(_1);
+      lexer.next_token();
       auto _2 = t();
       _res.children.emplace_back(_2);
       auto _3 = ep();
@@ -190,7 +192,7 @@ class parser {
       break;
     }
     default:
-      throw parser_exception{"ep: " + (lexer.cur_token() == token::_END ? "expected a token, but got EOF" : ("unexpected token " + lexer.info()))};
+      throw invalid_token("ep");
     }
     return _res;
   }
@@ -210,7 +212,7 @@ class parser {
       break;
     }
     default:
-      throw parser_exception{"t: " + (lexer.cur_token() == token::_END ? "expected a token, but got EOF" : ("unexpected token " + lexer.info()))};
+      throw invalid_token("t");
     }
     return _res;
   }
@@ -224,6 +226,7 @@ class parser {
     case token::MUL: {
       auto _1 = lexer.cur_token_val();
       _res.children.emplace_back(_1);
+      lexer.next_token();
       auto _2 = f();
       _res.children.emplace_back(_2);
       auto _3 = tp();
@@ -233,6 +236,7 @@ class parser {
     case token::DIV: {
       auto _1 = lexer.cur_token_val();
       _res.children.emplace_back(_1);
+      lexer.next_token();
       auto _2 = f();
       _res.children.emplace_back(_2);
       auto _3 = tp();
@@ -247,7 +251,7 @@ class parser {
       break;
     }
     default:
-      throw parser_exception{"tp: " + (lexer.cur_token() == token::_END ? "expected a token, but got EOF" : ("unexpected token " + lexer.info()))};
+      throw invalid_token("tp");
     }
     return _res;
   }
@@ -261,21 +265,31 @@ class parser {
     case token::NUM: {
       auto _1 = lexer.cur_token_val();
       _res.children.emplace_back(_1);
+      lexer.next_token();
       break;
     }
     case token::LP: {
       auto _1 = lexer.cur_token_val();
       _res.children.emplace_back(_1);
+      lexer.next_token();
       auto _2 = e();
       _res.children.emplace_back(_2);
       auto _3 = lexer.cur_token_val();
       _res.children.emplace_back(_3);
+      lexer.next_token();
       break;
     }
     default:
-      throw parser_exception{"f: " + (lexer.cur_token() == token::_END ? "expected a token, but got EOF" : ("unexpected token " + lexer.info()))};
+      throw invalid_token("f");
     }
     return _res;
+  }
+
+  parser_exception invalid_token(std::string&& n) {
+    auto reason = lexer.cur_token() == token::_END
+                      ? "expected a token, but got EOF"
+                      : ("unexpected token " + lexer.info());
+    return parser_exception{n + reason};
   }
 
 public:

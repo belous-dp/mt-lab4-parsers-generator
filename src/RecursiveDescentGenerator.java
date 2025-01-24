@@ -38,7 +38,7 @@ public class RecursiveDescentGenerator {
             visitBranch(br, rule.name);
         }
         out.write("\n    default:\n");
-        out.write(String.format("      throw parser_exception{\"%s: \" + (lexer.cur_token() == token::_END ? \"expected a token, but got EOF\" : (\"unexpected token \" + lexer.info()))};\n", rule.name));
+        out.write(String.format("      throw invalid_token(\"%s\");\n", rule.name));
         out.write("    }\n    return _res;\n  }\n\n");
     }
 
@@ -62,6 +62,9 @@ public class RecursiveDescentGenerator {
                 out.write(String.format("      auto %s = %s(%s);\n", cn, s.name, interpolate(s.inhAttrsCall)));
             }
             out.write(String.format("      _res.children.emplace_back(%s);\n", cn));
+            if (isTerminal(s)) {
+                out.write("      lexer.next_token();\n");
+            }
         }
         emplace_code(br.synthCode, 3);
         out.write("      break;\n    }");
