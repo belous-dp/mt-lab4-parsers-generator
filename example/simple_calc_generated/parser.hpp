@@ -295,7 +295,7 @@ class parser {
 public:
   parser(std::istream& is) : lexer(is) {}
 
-  node parse() {
+  e parse() {
     lexer.next_token();
     return e();
   }

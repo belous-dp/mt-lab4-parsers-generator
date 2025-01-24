@@ -223,10 +223,9 @@ public class ParserGenerator {
                 public:
                   parser(std::istream& is) : lexer(is) {}
                 
-                  node parse() {
-                    lexer.next_token();
                 """);
-        out.write("    return " + nonterminals.getFirst().name + "();\n  }\n};\n");
+        var s = nonterminals.getFirst().name;
+        out.write(String.format("  %s parse() {\n    lexer.next_token();\n    return %s();\n  }\n};\n", s, s));
     }
 
     private boolean checkLL1(List<NonTerminal> nonterminalRules) {
