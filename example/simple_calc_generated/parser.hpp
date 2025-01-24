@@ -105,7 +105,7 @@ private:
     }
   }
 
-  void isspace() const noexcept {
+  bool isspace() const noexcept {
     return std::isspace(static_cast<unsigned char>(ch));
   }
 
