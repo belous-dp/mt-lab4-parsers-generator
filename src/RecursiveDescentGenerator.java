@@ -48,7 +48,7 @@ public class RecursiveDescentGenerator {
         }
         out.write(" {\n");
         if (br == null) { // eps
-            out.write("      empty = true;\n      break;\n    }");
+            out.write("      _res.empty = true;\n      break;\n    }");
             return;
         }
         assert(br.symbs != null);

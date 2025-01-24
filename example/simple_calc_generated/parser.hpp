@@ -108,7 +108,7 @@ private:
     }
   }
 
-  const std::regex rNUM("[0-9]+");
+  const std::regex rNUM{"[0-9]+"};
 
   std::istream& is;
   std::string lexeme;
@@ -171,7 +171,7 @@ class parser {
     }
     case token::_END:
     case token::RP: {
-      empty = true;
+      _res.empty = true;
       break;
     }
     default:
@@ -228,7 +228,7 @@ class parser {
     case token::RP:
     case token::PLUS:
     case token::MINUS: {
-      empty = true;
+      _res.empty = true;
       break;
     }
     default:

@@ -172,7 +172,7 @@ public class ParserGenerator {
                 """);
         for (var tok : terminals) {
             if (tok.isRegex()) {
-                out.write("  const std::regex r" + tok.name() + "(\"" + tok.value() + "\");\n");
+                out.write("  const std::regex r" + tok.name() + "{\"" + tok.value() + "\"};\n");
                 // NOTE: the field can be static, but that would require less elegant code
             }
         }
