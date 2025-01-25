@@ -328,38 +328,20 @@ public class GrammarParser extends Parser {
 
 	@SuppressWarnings("CheckReturnValue")
 	public static class BranchContext extends ParserRuleContext {
-		public BranchContext(ParserRuleContext parent, int invokingState) {
-			super(parent, invokingState);
-		}
-		@Override public int getRuleIndex() { return RULE_branch; }
-	 
-		public BranchContext() { }
-		public void copyFrom(BranchContext ctx) {
-			super.copyFrom(ctx);
-		}
-	}
-	@SuppressWarnings("CheckReturnValue")
-	public static class EpsBranchContext extends BranchContext {
-		public EpsBranchContext(BranchContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof GrammarVisitor ) return ((GrammarVisitor<? extends T>)visitor).visitEpsBranch(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-	@SuppressWarnings("CheckReturnValue")
-	public static class NonEpsBranchContext extends BranchContext {
+		public TerminalNode SYNTH_CODE() { return getToken(GrammarParser.SYNTH_CODE, 0); }
 		public List<SymbContext> symb() {
 			return getRuleContexts(SymbContext.class);
 		}
 		public SymbContext symb(int i) {
 			return getRuleContext(SymbContext.class,i);
 		}
-		public TerminalNode SYNTH_CODE() { return getToken(GrammarParser.SYNTH_CODE, 0); }
-		public NonEpsBranchContext(BranchContext ctx) { copyFrom(ctx); }
+		public BranchContext(ParserRuleContext parent, int invokingState) {
+			super(parent, invokingState);
+		}
+		@Override public int getRuleIndex() { return RULE_branch; }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof GrammarVisitor ) return ((GrammarVisitor<? extends T>)visitor).visitNonEpsBranch(this);
+			if ( visitor instanceof GrammarVisitor ) return ((GrammarVisitor<? extends T>)visitor).visitBranch(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -370,12 +352,12 @@ public class GrammarParser extends Parser {
 		int _la;
 		try {
 			int _alt;
-			setState(58);
+			enterOuterAlt(_localctx, 1);
+			{
+			setState(55);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case T__3:
-				_localctx = new EpsBranchContext(_localctx);
-				enterOuterAlt(_localctx, 1);
 				{
 				setState(49);
 				match(T__3);
@@ -383,8 +365,6 @@ public class GrammarParser extends Parser {
 				break;
 			case RULE_NAME:
 			case TOKEN_NAME:
-				_localctx = new NonEpsBranchContext(_localctx);
-				enterOuterAlt(_localctx, 2);
 				{
 				setState(51); 
 				_errHandler.sync(this);
@@ -406,20 +386,21 @@ public class GrammarParser extends Parser {
 					_errHandler.sync(this);
 					_alt = getInterpreter().adaptivePredict(_input,5,_ctx);
 				} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
-				setState(56);
-				_errHandler.sync(this);
-				_la = _input.LA(1);
-				if (_la==SYNTH_CODE) {
-					{
-					setState(55);
-					match(SYNTH_CODE);
-					}
-				}
-
 				}
 				break;
 			default:
 				throw new NoViableAltException(this);
+			}
+			setState(58);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
+			if (_la==SYNTH_CODE) {
+				{
+				setState(57);
+				match(SYNTH_CODE);
+				}
+			}
+
 			}
 		}
 		catch (RecognitionException re) {
@@ -705,14 +686,14 @@ public class GrammarParser extends Parser {
 		"\b\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0005\u0001("+
 		"\b\u0001\n\u0001\f\u0001+\t\u0001\u0001\u0002\u0001\u0002\u0001\u0003"+
 		"\u0001\u0003\u0001\u0003\u0001\u0004\u0001\u0004\u0004\u00044\b\u0004"+
-		"\u000b\u0004\f\u00045\u0001\u0004\u0003\u00049\b\u0004\u0003\u0004;\b"+
+		"\u000b\u0004\f\u00045\u0003\u00048\b\u0004\u0001\u0004\u0003\u0004;\b"+
 		"\u0004\u0001\u0005\u0001\u0005\u0003\u0005?\b\u0005\u0001\u0005\u0003"+
 		"\u0005B\b\u0005\u0001\u0006\u0001\u0006\u0001\u0006\u0003\u0006G\b\u0006"+
 		"\u0001\u0006\u0001\u0006\u0001\u0006\u0001\u0006\u0001\u0007\u0001\u0007"+
 		"\u0001\b\u0004\bP\b\b\u000b\b\f\bQ\u0001\b\u0000\u0000\t\u0000\u0002\u0004"+
 		"\u0006\b\n\f\u000e\u0010\u0000\u0001\u0002\u0000\u0007\f\u000e\u000eV"+
 		"\u0000\u0013\u0001\u0000\u0000\u0000\u0002\u001c\u0001\u0000\u0000\u0000"+
-		"\u0004,\u0001\u0000\u0000\u0000\u0006.\u0001\u0000\u0000\u0000\b:\u0001"+
+		"\u0004,\u0001\u0000\u0000\u0000\u0006.\u0001\u0000\u0000\u0000\b7\u0001"+
 		"\u0000\u0000\u0000\nA\u0001\u0000\u0000\u0000\fC\u0001\u0000\u0000\u0000"+
 		"\u000eL\u0001\u0000\u0000\u0000\u0010O\u0001\u0000\u0000\u0000\u0012\u0014"+
 		"\u0003\u0002\u0001\u0000\u0013\u0012\u0001\u0000\u0000\u0000\u0014\u0015"+
@@ -730,11 +711,11 @@ public class GrammarParser extends Parser {
 		"\u0000)*\u0001\u0000\u0000\u0000*\u0003\u0001\u0000\u0000\u0000+)\u0001"+
 		"\u0000\u0000\u0000,-\u0005\t\u0000\u0000-\u0005\u0001\u0000\u0000\u0000"+
 		"./\u0005\u0003\u0000\u0000/0\u0005\t\u0000\u00000\u0007\u0001\u0000\u0000"+
-		"\u00001;\u0005\u0004\u0000\u000024\u0003\n\u0005\u000032\u0001\u0000\u0000"+
+		"\u000018\u0005\u0004\u0000\u000024\u0003\n\u0005\u000032\u0001\u0000\u0000"+
 		"\u000045\u0001\u0000\u0000\u000053\u0001\u0000\u0000\u000056\u0001\u0000"+
-		"\u0000\u000068\u0001\u0000\u0000\u000079\u0005\n\u0000\u000087\u0001\u0000"+
-		"\u0000\u000089\u0001\u0000\u0000\u00009;\u0001\u0000\u0000\u0000:1\u0001"+
-		"\u0000\u0000\u0000:3\u0001\u0000\u0000\u0000;\t\u0001\u0000\u0000\u0000"+
+		"\u0000\u000068\u0001\u0000\u0000\u000071\u0001\u0000\u0000\u000073\u0001"+
+		"\u0000\u0000\u00008:\u0001\u0000\u0000\u00009;\u0005\n\u0000\u0000:9\u0001"+
+		"\u0000\u0000\u0000:;\u0001\u0000\u0000\u0000;\t\u0001\u0000\u0000\u0000"+
 		"<>\u0005\u000b\u0000\u0000=?\u0003\u0004\u0002\u0000>=\u0001\u0000\u0000"+
 		"\u0000>?\u0001\u0000\u0000\u0000?B\u0001\u0000\u0000\u0000@B\u0005\f\u0000"+
 		"\u0000A<\u0001\u0000\u0000\u0000A@\u0001\u0000\u0000\u0000B\u000b\u0001"+
@@ -745,7 +726,7 @@ public class GrammarParser extends Parser {
 		"\u0000M\u000f\u0001\u0000\u0000\u0000NP\u0007\u0000\u0000\u0000ON\u0001"+
 		"\u0000\u0000\u0000PQ\u0001\u0000\u0000\u0000QO\u0001\u0000\u0000\u0000"+
 		"QR\u0001\u0000\u0000\u0000R\u0011\u0001\u0000\u0000\u0000\f\u0015\u001a"+
-		"\u001e!)58:>AFQ";
+		"\u001e!)57:>AFQ";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

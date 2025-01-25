@@ -273,14 +273,11 @@ public class ParserGenerator {
             for (var nt : nonterminals) {
                 var A = nt.name;
                 for (var br : nt.branches) {
-                    if (br != null) {
-                        var brs = br.symbs;
-                        assert(brs != null);
-                        for (int i = 0; i < brs.size(); i++) {
-                            var B = brs.get(i);
-                            if (!isTerminal(B)) {
-                                changed |= FOLLOW.get(B.name).addAll(first1(brs.subList(i + 1, brs.size()), A));
-                            }
+                    var brs = br.symbs;
+                    for (int i = 0; i < brs.size(); i++) {
+                        var B = brs.get(i);
+                        if (!isTerminal(B)) {
+                            changed |= FOLLOW.get(B.name).addAll(first1(brs.subList(i + 1, brs.size()), A));
                         }
                     }
                 }
@@ -293,12 +290,12 @@ public class ParserGenerator {
     }
 
     private Set<String> first(NonTerminal.Branch alpha) {
-        return alpha == null ? first((List<NonTerminal.Branch.Symb>) null) : first(alpha.symbs);
+        return first(alpha.symbs);
     }
 
     private Set<String> first(List<NonTerminal.Branch.Symb> alpha) {
         var res = new HashSet<String>();
-        if (alpha == null || alpha.isEmpty()) {
+        if (alpha.isEmpty()) {
             res.add(null);
         } else {
             var e = alpha.getFirst();
@@ -322,7 +319,7 @@ public class ParserGenerator {
     }
 
     private Set<String> first1(NonTerminal.Branch alpha, String A) {
-        return alpha == null ? first1((List<NonTerminal.Branch.Symb>) null, A) : first1(alpha.symbs, A);
+        return first1(alpha.symbs, A);
     }
 
     private Set<String> first1(List<NonTerminal.Branch.Symb> alpha, String A) {

@@ -23,11 +23,7 @@ public class CollectRulesVisitor extends GrammarBaseVisitor<Void> implements Gra
         return visitChildren(ctx);
     }
 
-    @Override public Void visitEpsBranch(GrammarParser.EpsBranchContext ctx) {
-        nonterminals.getLast().branches.add(null);
-        return null;
-    }
-    @Override public Void visitNonEpsBranch(GrammarParser.NonEpsBranchContext ctx) {
+    @Override public Void visitBranch(GrammarParser.BranchContext ctx) {
         nonterminals.getLast().branches.add(
                 new NonTerminal.Branch(
                         ctxToText(ctx.SYNTH_CODE())));

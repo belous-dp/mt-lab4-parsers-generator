@@ -35,19 +35,11 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSynthAttrs(GrammarParser.SynthAttrsContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code epsBranch}
-	 * labeled alternative in {@link GrammarParser#branch}.
+	 * Visit a parse tree produced by {@link GrammarParser#branch}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitEpsBranch(GrammarParser.EpsBranchContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code nonEpsBranch}
-	 * labeled alternative in {@link GrammarParser#branch}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitNonEpsBranch(GrammarParser.NonEpsBranchContext ctx);
+	T visitBranch(GrammarParser.BranchContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code symbr}
 	 * labeled alternative in {@link GrammarParser#symb}.

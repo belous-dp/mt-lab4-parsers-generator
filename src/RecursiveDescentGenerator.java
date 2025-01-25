@@ -47,12 +47,9 @@ public class RecursiveDescentGenerator {
             out.write(String.format("\n    case token::%s:", cas));
         }
         out.write(" {\n");
-        if (br == null) { // eps
-            out.write("      _res.empty = true;\n      break;\n    }");
-            return;
+        if (br.symbs.isEmpty()) { // eps
+            out.write("      _res.empty = true;\n");
         }
-        assert(br.symbs != null);
-        assert(!br.symbs.isEmpty());
         for (int i = 0; i < br.symbs.size(); i++) {
             var s = br.symbs.get(i);
             var cn = String.format("_%d", i + 1);

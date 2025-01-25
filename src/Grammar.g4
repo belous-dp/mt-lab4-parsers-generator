@@ -4,7 +4,7 @@ lang: rule_+ token+;
 rule_: RULE_NAME inhAttrs? synthAttrs? ':' branch ('|' branch)*; // nonterminals
 inhAttrs: ATTRS;
 synthAttrs: '->' ATTRS;
-branch: 'ε' #epsBranch | symb+ SYNTH_CODE? #nonEpsBranch;
+branch: ('ε' | symb+) SYNTH_CODE?;
 symb: RULE_NAME inhAttrs? #symbr | TOKEN_NAME #symbt;
 token: TOKEN_NAME ':' regex? '"' tokenValue '"'; // terminals
 regex: 'r';
