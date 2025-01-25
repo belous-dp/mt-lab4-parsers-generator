@@ -1,0 +1,23 @@
+e -> [double val]:
+    t ep[$1.val] {$res.val = $2.val}
+ep [double acc] -> [double val]:
+    PLUS t ep[acc + $2.val] {$res.val = $3.val}
+    | MINUS t ep[acc - $2.val] {$res.val = $3.val}
+    | ε {$res.val = acc}
+t -> [double val]:
+    f tp[$1.val] {$res.val = $2.val}
+tp [double acc] -> [double val]:
+    MUL f tp[acc * $2.val] {$res.val = $3.val}
+    | DIV f tp[acc / $2.val] {$res.val = $3.val}
+    | ε {$res.val = acc}
+f -> [double val]:
+    NUM {$res.val = stod($1)}
+    | LP e RP {//example of multi-line code; $res.val = $2.val;$res.val += 0.0;}
+
+NUM: r"[0-9]+(\\.[0-9]*)?"
+PLUS: "+"
+MINUS: "-"
+MUL: "*"
+DIV: "/"
+LP: "("
+RP: ")"

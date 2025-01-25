@@ -4,8 +4,10 @@ public class Main {
     public static void main(String[] args) {
 //        var inp = "U:\\5th semester\\TM\\lab4\\example\\simple_calc.txt";
 //        var dir = "U:\\5th semester\\TM\\lab4\\example\\simple_calc_generated";
-        var inp = "U:\\5th semester\\TM\\lab4\\example\\logic_exprs.txt";
-        var dir = "U:\\5th semester\\TM\\lab4\\example\\logic_exprs_generated";
+//        var inp = "U:\\5th semester\\TM\\lab4\\example\\logic_exprs.txt";
+//        var dir = "U:\\5th semester\\TM\\lab4\\example\\logic_exprs_generated";
+        var inp = "U:\\5th semester\\TM\\lab4\\example\\attrs_calc.txt";
+        var dir = "U:\\5th semester\\TM\\lab4\\example\\attrs_calc_generated";
         try {
             new ParserGenerator(inp, dir).run();
         } catch (InvalidGrammarException e) {
