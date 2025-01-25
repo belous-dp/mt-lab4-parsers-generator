@@ -389,7 +389,7 @@ class parser {
 public:
   parser(std::istream& is) : lexer(is) {}
 
-  e parse() {
+  struct e parse() {
     lexer.next_token();
     return e();
   }

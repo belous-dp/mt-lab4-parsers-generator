@@ -225,7 +225,7 @@ public class ParserGenerator {
                 
                 """);
         var s = nonterminals.getFirst().name;
-        out.write(String.format("  %s parse() {\n    lexer.next_token();\n    return %s();\n  }\n};\n", s, s));
+        out.write(String.format("  struct %s parse() {\n    lexer.next_token();\n    return %s();\n  }\n};\n", s, s));
     }
 
     private boolean checkLL1(List<NonTerminal> nonterminalRules) {
