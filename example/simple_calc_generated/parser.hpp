@@ -138,7 +138,7 @@ struct parser_exception : std::runtime_error {
 };
 
 class parser {
-  lexer lexer;
+  struct lexer lexer;
 
   struct e : node {
     e() : node("e") {};

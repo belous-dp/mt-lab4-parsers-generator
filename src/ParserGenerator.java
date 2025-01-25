@@ -208,7 +208,7 @@ public class ParserGenerator {
                 };
                 
                 class parser {
-                  lexer lexer;
+                  struct lexer lexer;
                 
                 """);
         new RecursiveDescentGenerator(nonterminals, out, this::first1).generate();
