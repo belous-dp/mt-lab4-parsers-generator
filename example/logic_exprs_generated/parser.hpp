@@ -58,11 +58,14 @@ struct lexer {
         break;
       }
       next_char();
-      if (is.good() && isspace()) {
-        throw lexer_exception{"expected token, got space at pos " + std::to_string(pos)};
+      if (!is) {
+        throw lexer_exception{"the stream failed or closed unexpectedly while matching " + info()};
       }
       if (is.eof()) {
         throw lexer_exception{"unknown lexeme " + info()};
+      }
+      if (isspace()) {
+        throw lexer_exception{"expected token, got space at pos " + std::to_string(pos)};
       }
     } while (buf.size() < MAX_BUF_SIZE);
     if (buf.size() >= MAX_BUF_SIZE) {
