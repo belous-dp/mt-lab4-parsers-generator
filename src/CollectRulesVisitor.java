@@ -9,9 +9,19 @@ import java.util.List;
 public class CollectRulesVisitor extends GrammarBaseVisitor<Void> implements GrammarVisitor<Void> {
     private final List<Terminal> terminals = new ArrayList<>();
     private final List<NonTerminal> nonterminals = new ArrayList<>();
+    private String includes;
 
     private String ctxToText(ParseTree ctx) {
         return ctx == null ? null : ctx.getText();
+    }
+
+    @Override public Void visitLang(GrammarParser.LangContext ctx) {
+        if (ctx.includes() != null) {
+            includes = ctx.includes().getText();
+            assert(includes.length() >= 6);
+            includes = includes.substring(3, includes.length() - 3);
+        }
+        return visitChildren(ctx);
     }
 
     @Override public Void visitRule_(GrammarParser.Rule_Context ctx) {
@@ -55,5 +65,8 @@ public class CollectRulesVisitor extends GrammarBaseVisitor<Void> implements Gra
     }
     public List<NonTerminal> getNonterminals() {
         return nonterminals;
+    }
+    public String getIncludes() {
+        return includes;
     }
 }

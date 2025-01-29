@@ -43,7 +43,7 @@ public class ParserGenerator {
             includeHeaders();
             createTokensEnum(initVisitor.getTerminals());
             createLexer(initVisitor.getTerminals());
-            createParser(initVisitor.getNonterminals());
+            createParser(initVisitor.getNonterminals(), initVisitor.getIncludes());
         } finally {
             out.close();
         }
@@ -204,7 +204,11 @@ public class ParserGenerator {
                 """);
     }
 
-    private void createParser(List<NonTerminal> nonterminals) throws IOException {
+    private void createParser(List<NonTerminal> nonterminals, String includes) throws IOException {
+        if (!includes.isEmpty()) {
+            out.write(includes);
+            out.write("\n");
+        }
         out.write("""
                 struct parser_exception : std::runtime_error {
                   using std::runtime_error::runtime_error;

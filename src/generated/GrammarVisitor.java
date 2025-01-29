@@ -17,6 +17,12 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitLang(GrammarParser.LangContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link GrammarParser#includes}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIncludes(GrammarParser.IncludesContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link GrammarParser#rule_}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
