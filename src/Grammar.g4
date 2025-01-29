@@ -8,7 +8,7 @@ branch: ('ε' | symb+) SYNTH_CODE?;
 symb: RULE_NAME inhAttrs? #symbr | TOKEN_NAME #symbt;
 token: TOKEN_NAME ':' regex? '"' tokenValue '"'; // terminals
 regex: 'r';
-tokenValue: (ESCQ | ESQS | ATTRS | SYNTH_CODE | RULE_NAME | TOKEN_NAME | RESTQ)+;
+tokenValue: (ESCQ | ESQS | ':' | '|' | '->' | 'ε' | 'r' | ATTRS | SYNTH_CODE | RULE_NAME | TOKEN_NAME | RESTQ)+;
 
 ESCQ: '\\"';
 ESQS: '\\ ';

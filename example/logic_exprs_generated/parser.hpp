@@ -11,7 +11,7 @@
 
 using namespace std::string_literals;
 
-enum class token { VAR, _END };
+enum class token { VAR, OR, XOR, AND, SHL, SHR, NOT, LP, RP, _END };
 
 struct lexer_exception : std::runtime_error {
   using std::runtime_error::runtime_error;
@@ -55,6 +55,38 @@ struct lexer {
       buf += ch;
       if (greedy_regex_match(rVAR)) {
         t = token::VAR;
+        break;
+      }
+      if (buf == "|") {
+        t = token::OR;
+        break;
+      }
+      if (buf == "^") {
+        t = token::XOR;
+        break;
+      }
+      if (buf == "&") {
+        t = token::AND;
+        break;
+      }
+      if (buf == "<<") {
+        t = token::SHL;
+        break;
+      }
+      if (buf == ">>") {
+        t = token::SHR;
+        break;
+      }
+      if (buf == "~") {
+        t = token::NOT;
+        break;
+      }
+      if (buf == "(") {
+        t = token::LP;
+        break;
+      }
+      if (buf == ")") {
+        t = token::RP;
         break;
       }
       next_char();
