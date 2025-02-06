@@ -9,7 +9,7 @@ import java.util.List;
 public class CollectRulesVisitor extends GrammarBaseVisitor<Void> implements GrammarVisitor<Void> {
     private final List<Terminal> terminals = new ArrayList<>();
     private final List<NonTerminal> nonterminals = new ArrayList<>();
-    private String includes;
+    private String includes = "";
 
     private String ctxToText(ParseTree ctx) {
         return ctx == null ? null : ctx.getText();

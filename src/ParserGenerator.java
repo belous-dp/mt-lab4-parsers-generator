@@ -51,7 +51,7 @@ public class ParserGenerator {
 
     private void initializeOutputStreams() throws IOException {
         Files.createDirectories(outDir);
-        var justCopy = List.of("CMakeLists.txt", "main.cpp", "tree.hpp");
+        var justCopy = List.of("CMakeLists.txt", "main.cpp", "tree.hpp", "ctre.hpp");
         for (var fn : justCopy) {
             var src = getClass().getResourceAsStream(fn);
             if (src == null) {
@@ -68,12 +68,13 @@ public class ParserGenerator {
                 #pragma once
                 
                 #include "tree.hpp"
+                #include "ctre.hpp"
                 
                 #include <cctype>
                 #include <istream>
                 #include <stdexcept>
                 #include <string>
-                #include <regex>
+                #include <string_view>
                 #include <vector>
                 
                 using namespace std::string_literals;
@@ -94,13 +95,13 @@ public class ParserGenerator {
                 };
                 
                 struct lexer {
-                  static constexpr size_t MAX_BUF_SIZE = 10000;
                 
-                  lexer(std::istream& is) : is(is) {
+                  lexer(std::istream& is) {
                     if (!is) {
                       throw lexer_exception{"stream is not opened"};
                     }
-                    next_char();
+                    buf_ = gulp(is);
+                    input = buf_;
                   }
                 
                   token cur_token() const noexcept {
@@ -108,94 +109,70 @@ public class ParserGenerator {
                   }
                 
                   std::string cur_token_val() const noexcept {
-                    return lexeme;
+                    return std::string{lexeme};
                   }
                 
                   std::string info() const noexcept {
-                    return "'" + buf + "' at pos " + std::to_string(pos - 1);
+                    return "'"s + input.front() + "' at pos " + std::to_string(pos - 1);
                   }
                 
                   token next_token() {
-                    while (is.good() && isspace()) {
-                      next_char();
+                    while (!is_eof() && is_space()) {
+                      input.remove_prefix(1);
+                      pos++;
                     }
-                    if (is.eof()) {
+                    if (is_eof()) {
                       t = token::_END;
                       return t;
                     }
-                    if (!is) {
-                      throw lexer_exception{"the stream is corrupted or closed unexpectedly "
-                                            "(pos=" + std::to_string(pos) + ')'};
-                    }
                 """);
-        out.write("    do {\n      buf += ch;\n");
+        var first = true;
         for (var tok : terminals) {
-            out.write("      if (");
+            out.write(first ? "    " : " else ");
+            first = false;
+            out.write("if (");
+            String take;
             if (tok.isRegex()) {
-                out.write("greedy_regex_match(r" + tok.name() + ")");
+                out.write("auto m = ctre::starts_with<\"" + tok.value() + "\">(input)");
+                take = "m.size()";
             } else {
-                out.write("buf == \"" + tok.value() + "\"");
+                out.write("input.starts_with(\"" + tok.value() + "\")");
+                take = String.valueOf(tok.value().length());
             }
-            out.write(") {\n        t = token::" + tok.name() + ";\n        break;\n      }\n");
+            out.write(") {\n        t = token::" + tok.name() + ";\n        take(" + take + ");\n    }");
         }
         out.write("""
-                      next_char();
-                      if (!is) {
-                        throw lexer_exception{"the stream failed or closed unexpectedly while matching " + info()};
-                      }
-                      if (is.eof()) {
-                        throw lexer_exception{"unknown lexeme " + info()};
-                      }
-                      if (isspace()) {
-                        throw lexer_exception{"expected token, got space at pos " + std::to_string(pos)};
-                      }
-                    } while (buf.size() < MAX_BUF_SIZE);
-                    if (buf.size() >= MAX_BUF_SIZE) {
-                      throw lexer_exception{"unmatched lexeme size exceeded " + std::to_string(MAX_BUF_SIZE)};
-                    }
-                    lexeme = std::move(buf);
-                    buf = "";
-                    next_char();
+                
                     return t;
                   }
                 
                 private:
-                  void next_char() {
-                    if (is.get(ch)) {
-                      pos++;
-                    }
+                  std::string gulp(std::istream &in) {
+                    std::string ret;
+                    char buffer[4096];
+                    while (in.read(buffer, sizeof(buffer)))
+                      ret.append(buffer, sizeof(buffer));
+                    ret.append(buffer, in.gcount());
+                    return ret;
                   }
                 
-                  bool isspace() const noexcept {
-                    return std::isspace(static_cast<unsigned char>(ch));
+                  bool is_eof() const noexcept {
+                    return input.empty();
                   }
                 
-                  bool greedy_regex_match(const std::regex& r) {
-                    if (!std::regex_match(buf, r)) {
-                      return false;
-                    }
-                    do {
-                      next_char();
-                      buf += ch;
-                    } while (is.good() && !isspace() && std::regex_match(buf, r));
-                    buf.pop_back();
-                    is.unget();
-                    pos--;
-                    return true;
+                  bool is_space() const noexcept {
+                    return std::isspace(static_cast<unsigned char>(input.front()));
                   }
                 
-                """);
-        for (var tok : terminals) {
-            if (tok.isRegex()) {
-                out.write("  const std::regex r" + tok.name() + "{\"" + tok.value() + "\"};\n");
-                // NOTE: the field can be static, but that would require less elegant code
-            }
-        }
-        out.write("""
+                  void take(size_t n) {
+                    lexeme = input.substr(0, n);
+                    input.remove_prefix(n);
+                    pos += n;
+                  }
                 
-                  std::istream& is;
-                  std::string lexeme;
-                  std::string buf;
+                  std::string buf_;
+                  std::string_view input;
+                  std::string_view lexeme;
                   size_t pos{0};
                   token t;
                   char ch;
