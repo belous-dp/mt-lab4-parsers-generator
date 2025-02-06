@@ -37,7 +37,7 @@ struct lexer {
   }
 
   std::string info() const noexcept {
-    return "'"s + input.front() + "' at pos " + std::to_string(pos - 1);
+    return "'"s + input.front() + "' at pos " + std::to_string(pos);
   }
 
   token next_token() {
@@ -49,7 +49,7 @@ struct lexer {
       t = token::_END;
       return t;
     }
-    if (auto m = ctre::starts_with<"\\[\\[ .*? \\]\\]">(input)) {
+    if (auto m = ctre::starts_with<"\\[\\[.*?\\]\\]">(input)) {
         t = token::MATRIX;
         take(m.size());
     } else if (input.starts_with("+")) {
@@ -182,7 +182,7 @@ matrix elemwise(matrix a, matrix const& b, auto op) {
     if (a[i].size() != a[0].size() || b[i].size() != a[0].size()) {
       throw std::invalid_argument{"invalid matrix (not rectangular)"};
     }
-    for (size_t j = 0; j < b.size(); ++j) {
+    for (size_t j = 0; j < b[i].size(); ++j) {
       a[i][j] = op(a[i][j], b[i][j]);
     }
   }
@@ -396,7 +396,7 @@ class parser {
     auto reason = lexer.cur_token() == token::_END
                       ? "expected a token, but got EOF"
                       : ("unexpected token " + lexer.info());
-    return parser_exception{n + reason};
+    return parser_exception{n + ": " + reason};
   }
 
 public:

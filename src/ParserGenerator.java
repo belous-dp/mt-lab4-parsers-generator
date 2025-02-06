@@ -113,7 +113,7 @@ public class ParserGenerator {
                   }
                 
                   std::string info() const noexcept {
-                    return "'"s + input.front() + "' at pos " + std::to_string(pos - 1);
+                    return "'"s + input.front() + "' at pos " + std::to_string(pos);
                   }
                 
                   token next_token() {
@@ -201,7 +201,7 @@ public class ParserGenerator {
                     auto reason = lexer.cur_token() == token::_END
                                       ? "expected a token, but got EOF"
                                       : ("unexpected token " + lexer.info());
-                    return parser_exception{n + reason};
+                    return parser_exception{n + ": " + reason};
                   }
                 
                 public:

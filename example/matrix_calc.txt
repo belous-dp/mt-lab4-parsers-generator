@@ -74,7 +74,7 @@ matrix elemwise(matrix a, matrix const& b, auto op) {
     if (a[i].size() != a[0].size() || b[i].size() != a[0].size()) {
       throw std::invalid_argument{"invalid matrix (not rectangular)"};
     }
-    for (size_t j = 0; j < b.size(); ++j) {
+    for (size_t j = 0; j < b[i].size(); ++j) {
       a[i][j] = op(a[i][j], b[i][j]);
     }
   }
@@ -134,7 +134,7 @@ f -> [matrix val]:
     MATRIX {$res.val = parse_matrix($1)}
     | LP e RP {$res.val = $2.val}
 
-MATRIX: r"\\[\\[ .*? \\]\\]"
+MATRIX: r"\\[\\[.*?\\]\\]"
 PLUS: "+"
 MINUS: "-"
 MMUL: "**"
