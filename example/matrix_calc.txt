@@ -1,121 +1,5 @@
 ###
-#include <functional>
-#include <stdexcept>
-#include <string>
-#include <vector>
-#include <variant>
-
-using namespace std::string_literals;
-
-using matrix = std::vector<std::vector<double>>;
-using vector = std::vector<double>;
-using atype = std::variant<double, vector, matrix>;
-
-size_t parse_vector(std::string const& s, size_t start, vector& res) {
-  if (s[start] != '[') {
-    throw std::invalid_argument{"vector must start with '['"};
-  }
-  auto buf = ""s;
-  auto i = start + 1;
-  for (; i < s.size(); ++i) {
-    if (s[i] == ']' || s[i] == ',' || s[i] == ' ') {
-      if (!buf.empty() || i != start + 1) {
-        if (buf.empty()) {
-          res.push_back(0);
-        } else {
-          res.push_back(stod(buf));
-        }
-        buf.clear();
-      }
-      if (s[i] == ']') {
-        i++;
-        break;
-      }
-      while (i < s.size() && (s[i] == ' ' || s[i] == ',')) {
-        i++;
-      }
-      i--;
-    }
-    if (s[i] != ' ' && s[i] != ',') {
-      buf += s[i];
-    }
-  }
-  return i;
-}
-
-vector parse_vector(std::string const& s) {
-  auto res = vector{};
-  parse_vector(s, 0, res);
-  return res;
-}
-
-matrix parse_matrix(std::string const& s) {
-  auto res = matrix{};
-  for (size_t i = 1; i + 1 < s.size();) {
-    res.push_back(vector{});
-    i = parse_vector(s, i, res.back());
-    while (i < s.size() && (s[i] == ',' || s[i] == ' ')) {
-      i++;
-    }
-  }
-  return res;
-}
-
-matrix elemwise(matrix a, matrix const& b, auto op) {
-  if (a.empty()) {
-    if (b.empty()) {
-      return {};
-    }
-  }
-  if (a.size() != b.size() || b.empty() || a[0].size() != b[0].size()) {
-    throw std::invalid_argument{"matrices sizes not equal"};
-  }
-  for (size_t i = 0; i < a.size(); ++i) {
-    if (a[i].size() != a[0].size() || b[i].size() != a[0].size()) {
-      throw std::invalid_argument{"invalid matrix (not rectangular)"};
-    }
-    for (size_t j = 0; j < b[i].size(); ++j) {
-      a[i][j] = op(a[i][j], b[i][j]);
-    }
-  }
-  return a;
-}
-
-matrix add(matrix const& a, matrix const& b) {
-  return elemwise(a, b, std::plus<double>{});
-}
-
-matrix sub(matrix const& a, matrix const& b) {
-  return elemwise(a, b, std::minus<double>{});
-}
-
-matrix prod(matrix const& a, matrix const& b) {
-  return elemwise(a, b, std::multiplies<double>{});
-}
-
-matrix product(matrix const& a, matrix const& b) {
-  if (a.empty()) {
-    if (b.empty()) {
-      return {};
-    }
-  }
-  auto c1 = a[0].size();
-  auto r2 = b.size();
-  if (c1 != r2) {
-    throw std::invalid_argument{"matrices sizes are invalid: C1 != R2"};
-  }
-  auto r1 = a.size();
-  auto c2 = b[0].size();
-  auto res = matrix(r1, vector(c2));
-  for (size_t i = 0; i < r1; ++i) {
-    for (size_t j = 0; j < c2; ++j) {
-      for (size_t k = 0; k < c1; ++k) {
-        res[i][j] += a[i][k] * b[k][j];
-      }
-    }
-  }
-  return res;
-}
+#include "matrix.hpp"
 ###
 
 e -> [matrix val]:
@@ -128,16 +12,23 @@ t -> [matrix val]:
     f tp[$1.val] {$res.val = $2.val}
 tp [matrix acc] -> [matrix val]:
     MMUL f tp[product(acc, $2.val)] {$res.val = $3.val}
+    | MDIV f tp[division(acc, $2.val)] {$res.val = $3.val}
     | MUL f tp[prod(acc, $2.val)] {$res.val = $3.val}
+    | DIV f tp[div(acc, $2.val)] {$res.val = $3.val}
     | ε {$res.val = acc}
 f -> [matrix val]:
+    i INV {$res.val = inverse($1.val)}
+i -> [matrix val]:
     MATRIX {$res.val = parse_matrix($1)}
     | LP e RP {$res.val = $2.val}
 
 MATRIX: r"\\[\\[.*?\\]\\]"
+INV: r"\\^\\(-1\\)|\\^-1"
 PLUS: "+"
 MINUS: "-"
 MMUL: "**"
+MDIV: "//"
 MUL: "*"
+DIV: "/"
 LP: "("
 RP: ")"

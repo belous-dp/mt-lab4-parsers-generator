@@ -3,39 +3,12 @@
 #include <iostream>
 #include <fstream>
 
-void print_vector(std::ostream& os, vector const& v) {
-  os << '[';
-  auto first = true;
-  for (auto const& e : v) {
-    if (!first) {
-      os << ' ';
-    }
-    first = false;
-    os << e;
-  }
-  os << ']';
-}
-
-void print_matrix(std::ostream& os, matrix const& m) {
-  os << '[';
-  auto first = true;
-  for (auto const& v : m) {
-    if (!first) {
-      os << ", ";
-    }
-    first = false;
-    print_vector(os, v);
-  }
-  os << ']';
-}
-
 int main() {
   try {
     auto res = parser(std::cin).parse();
     std::cout << "Successfully parsed the expression. Text representation:\n" << res << std::endl;
     std::cout << "Result: ";
-    print_matrix(std::cout, res.val);
-    std::cout << std::endl;
+    print_matrix(std::cout, res.val) << std::endl;
     auto extport = [&res](node::graph_mode mode, char const* fname) {
       auto fs = std::ofstream(fname);
       fs << res.full_dot_repr(mode);
