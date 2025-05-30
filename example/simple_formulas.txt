@@ -1,0 +1,13 @@
+e: o ep
+ep: OR o ep | ε
+o: a op
+op: AND a op | ε
+a: NOT n | n
+n: LP e RP | VAR
+
+VAR: r"x[0-7]"
+OR: "|"
+AND: "&"
+NOT: "~"
+LP: "("
+RP: ")"
