@@ -1,9 +1,101 @@
-e: o ep
-ep: OR o ep | ε
-o: a op
-op: AND a op | ε
-a: NOT n | n
-n: LP e RP | VAR
+###
+// === arithmetization structs ===
+
+using var_val_t = std::array<uint8_t, MAXN + 1>;
+
+// primitives: calculatable, variable, one_minus, multiply
+struct calculatable {
+    int calculate(const var_val_t& variables_values) {
+        auto res = calculate_impl(variables_values);
+        assert(res == 0 || res == 1);
+        return res;
+    }
+
+protected:
+    virtual ~calculatable() = default;
+    virtual int calculate_impl(const var_val_t& variables_values) = 0;
+};
+
+using expr_ptr = std::unique_ptr<calculatable>;
+
+struct variable : calculatable {
+    variable(uint8_t id) : id(id) {
+        assert(0 < id && id <= MAXN);
+    }
+
+private:
+    int calculate_impl(const var_val_t& variables_values) override {
+        return variables_values[id];
+    }
+
+    uint8_t id;
+};
+
+struct one_minus : calculatable {
+    one_minus(expr_ptr&& expr) : expr(std::move(expr)) {}
+    one_minus(calculatable* p) : expr(p) {}
+
+private:
+    int calculate_impl(const var_val_t& variables_values) override {
+        return 1 - expr->calculate(variables_values);
+    }
+
+    expr_ptr expr;
+};
+
+struct product : calculatable {
+    product(expr_ptr&& lhs, expr_ptr&& rhs) : lhs(std::move(lhs)), rhs(std::move(rhs)) {}
+    product(calculatable* lp, calculatable* rp) : lhs(lp), rhs(rp) {}
+
+private:
+    int calculate_impl(const var_val_t& variables_values) override {
+        return lhs->calculate(variables_values) * rhs->calculate(variables_values);
+    }
+
+    expr_ptr lhs;
+    expr_ptr rhs;
+};
+
+// !== arithmetization structs !==
+
+// === arithmetization helpers ===
+
+expr_ptr a_not(expr_ptr&& expr) {
+    return expr_ptr{new one_minus(std::move(expr))};
+}
+
+expr_ptr a_and(expr_ptr&& lhs, expr_ptr&& rhs) {
+    return expr_ptr{new product(std::move(lhs), std::move(rhs))};
+}
+
+expr_ptr a_or(expr_ptr&& lhs, expr_ptr&& rhs) {
+    return a_not(a_and(a_not(std::move(lhs)), a_not(std::move(rhs))));
+}
+
+expr_ptr a_var(std::string const& s) {
+    assert(s.size() == 2 && '1' <= s[1] && s[1] <= '7');
+    return expr_ptr{new variable(s[1] - '0')};
+}
+
+// !== arithmetization helpers !==
+###
+
+e -> [expr_ptr expr]:
+    o ep[std::move($1.expr)] {$res.expr = std::move($2.expr)}
+ep [expr_ptr&& acc] -> [expr_ptr expr]:
+    OR o ep[a_or(std::move(acc), std::move($2.expr))] {$res.expr = std::move($3.expr)}
+    | ε {$res.expr = std::move(acc)}
+o -> [expr_ptr expr]:
+    a op[std::move($1.expr)] {$res.expr = std::move($2.expr)}
+op[expr_ptr&& acc] -> [expr_ptr expr]:
+    AND a op[a_and(std::move(acc), std::move($2.expr))] {$res.expr = std::move($3.expr)}
+    | ε {$res.expr = std::move(acc)}
+a -> [expr_ptr expr]:
+    NOT n {$res.expr = a_not(std::move($2.expr))}
+    | n {$res.expr = std::move($1.expr)}
+n -> [expr_ptr expr]:
+    LP e RP {$res.expr = std::move($2.expr)}
+    | VAR {$res.expr = a_var($1)}
 
 VAR: r"x[0-7]"
 OR: "|"

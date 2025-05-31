@@ -105,6 +105,87 @@ private:
   char ch;
 };
 
+
+// === arithmetization structs ===
+
+using var_val_t = std::array<uint8_t, MAXN + 1>;
+
+// primitives: calculatable, variable, one_minus, multiply
+struct calculatable {
+    int calculate(const var_val_t& variables_values) {
+        auto res = calculate_impl(variables_values);
+        assert(res == 0 || res == 1);
+        return res;
+    }
+
+protected:
+    virtual ~calculatable() = default;
+    virtual int calculate_impl(const var_val_t& variables_values) = 0;
+};
+
+using expr_ptr = std::unique_ptr<calculatable>;
+
+struct variable : calculatable {
+    variable(uint8_t id) : id(id) {
+        assert(0 < id && id <= MAXN);
+    }
+
+private:
+    int calculate_impl(const var_val_t& variables_values) override {
+        return variables_values[id];
+    }
+
+    uint8_t id;
+};
+
+struct one_minus : calculatable {
+    one_minus(expr_ptr&& expr) : expr(std::move(expr)) {}
+    one_minus(calculatable* p) : expr(p) {}
+
+private:
+    int calculate_impl(const var_val_t& variables_values) override {
+        return 1 - expr->calculate(variables_values);
+    }
+
+    expr_ptr expr;
+};
+
+struct product : calculatable {
+    product(expr_ptr&& lhs, expr_ptr&& rhs) : lhs(std::move(lhs)), rhs(std::move(rhs)) {}
+    product(calculatable* lp, calculatable* rp) : lhs(lp), rhs(rp) {}
+
+private:
+    int calculate_impl(const var_val_t& variables_values) override {
+        return lhs->calculate(variables_values) * rhs->calculate(variables_values);
+    }
+
+    expr_ptr lhs;
+    expr_ptr rhs;
+};
+
+// !== arithmetization structs !==
+
+// === arithmetization helpers ===
+
+expr_ptr a_not(expr_ptr&& expr) {
+    return expr_ptr{new one_minus(std::move(expr))};
+}
+
+expr_ptr a_and(expr_ptr&& lhs, expr_ptr&& rhs) {
+    return expr_ptr{new product(std::move(lhs), std::move(rhs))};
+}
+
+expr_ptr a_or(expr_ptr&& lhs, expr_ptr&& rhs) {
+    return a_not(a_and(a_not(std::move(lhs)), a_not(std::move(rhs))));
+}
+
+expr_ptr a_var(std::string const& s) {
+    assert(s.size() == 2 && '1' <= s[1] && s[1] <= '7');
+    return expr_ptr{new variable(s[1] - '0')};
+}
+
+// !== arithmetization helpers !==
+
 struct parser_exception : std::runtime_error {
   using std::runtime_error::runtime_error;
 };
@@ -114,6 +195,7 @@ class parser {
 
   struct e : node {
     e() : node("e") {};
+    expr_ptr expr;
   };
   e e() {
     auto _res = (struct e){};
@@ -123,8 +205,9 @@ class parser {
     case token::VAR: {
       auto _1 = o();
       _res.children.emplace_back(_1);
-      auto _2 = ep();
+      auto _2 = ep(std::move(_1.expr));
       _res.children.emplace_back(_2);
+      _res.expr = std::move(_2.expr);
       break;
     }
     default:
@@ -135,8 +218,9 @@ class parser {
 
   struct ep : node {
     ep() : node("ep") {};
+    expr_ptr expr;
   };
-  ep ep() {
+  ep ep(expr_ptr&& acc) {
     auto _res = (struct ep){};
     switch (lexer.cur_token()) {
     case token::OR: {
@@ -145,13 +229,15 @@ class parser {
       lexer.next_token();
       auto _2 = o();
       _res.children.emplace_back(_2);
-      auto _3 = ep();
+      auto _3 = ep(a_or(std::move(acc), std::move(_2.expr)));
       _res.children.emplace_back(_3);
+      _res.expr = std::move(_3.expr);
       break;
     }
     case token::_END:
     case token::RP: {
       _res.empty = true;
+      _res.expr = std::move(acc);
       break;
     }
     default:
@@ -162,6 +248,7 @@ class parser {
 
   struct o : node {
     o() : node("o") {};
+    expr_ptr expr;
   };
   o o() {
     auto _res = (struct o){};
@@ -171,8 +258,9 @@ class parser {
     case token::VAR: {
       auto _1 = a();
       _res.children.emplace_back(_1);
-      auto _2 = op();
+      auto _2 = op(std::move(_1.expr));
       _res.children.emplace_back(_2);
+      _res.expr = std::move(_2.expr);
       break;
     }
     default:
@@ -183,8 +271,9 @@ class parser {
 
   struct op : node {
     op() : node("op") {};
+    expr_ptr expr;
   };
-  op op() {
+  op op(expr_ptr&& acc) {
     auto _res = (struct op){};
     switch (lexer.cur_token()) {
     case token::AND: {
@@ -193,14 +282,16 @@ class parser {
       lexer.next_token();
       auto _2 = a();
       _res.children.emplace_back(_2);
-      auto _3 = op();
+      auto _3 = op(a_and(std::move(acc), std::move(_2.expr)));
       _res.children.emplace_back(_3);
+      _res.expr = std::move(_3.expr);
       break;
     }
     case token::_END:
     case token::OR:
     case token::RP: {
       _res.empty = true;
+      _res.expr = std::move(acc);
       break;
     }
     default:
@@ -211,6 +302,7 @@ class parser {
 
   struct a : node {
     a() : node("a") {};
+    expr_ptr expr;
   };
   a a() {
     auto _res = (struct a){};
@@ -221,12 +313,14 @@ class parser {
       lexer.next_token();
       auto _2 = n();
       _res.children.emplace_back(_2);
+      _res.expr = a_not(std::move(_2.expr));
       break;
     }
     case token::LP:
     case token::VAR: {
       auto _1 = n();
       _res.children.emplace_back(_1);
+      _res.expr = std::move(_1.expr);
       break;
     }
     default:
@@ -237,6 +331,7 @@ class parser {
 
   struct n : node {
     n() : node("n") {};
+    expr_ptr expr;
   };
   n n() {
     auto _res = (struct n){};
@@ -250,12 +345,14 @@ class parser {
       auto _3 = lexer.cur_token_val();
       _res.children.emplace_back(_3);
       lexer.next_token();
+      _res.expr = std::move(_2.expr);
       break;
     }
     case token::VAR: {
       auto _1 = lexer.cur_token_val();
       _res.children.emplace_back(_1);
       lexer.next_token();
+      _res.expr = a_var(_1);
       break;
     }
     default:
